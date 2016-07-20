@@ -2,7 +2,7 @@
 
 /**
  * @author     Albert Fatsini - getfinancing.com
- * @date       : 23.11.2015
+ * @date       : 20.07.2016
  *
  * @copyright  Copyright (C) 2015 - 2015 getfinancing.com . All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE
@@ -166,15 +166,25 @@ class plgVmPaymentGetfinancing extends vmPSPlugin {
 
 
         //Products description
+        $product_info='';
+        $cart_items = array();
         foreach ($cart->products as $product) {
-              $products .= $product->product_name.' ('.$product->quantity.') ';
+              $product_info .= $product->product_name.' ('.$product->quantity.') ';
+              $cart_items[]=array('sku' => $product->product_sku,
+                                  'display_name' => $product->product_name,
+                                  'quantity' => $product->quantity,
+                                  'unit_price' => $product->prices['basePrice'],
+                                  'unit_tax' => $product->prices['taxAmount']
+
+            );
         }
 
         $merchant_loan_id = md5(time() .$merchant_id . $order['details']['BT']->first_name . $order_amount);
 
         $gf_data = array(
             'amount'           => $order_amount,
-            'product_info'     => $products,
+            'product_info'     => $product_info,
+            //'cart_items'       => json_encode($cart_items),
             'first_name'       => $order['details']['BT']->first_name,
             'last_name'        => $order['details']['BT']->last_name,
             'shipping_address' => array(
@@ -191,7 +201,13 @@ class plgVmPaymentGetfinancing extends vmPSPlugin {
             ),
             'version'          => '1.9',
             'email'            => $customer_email,
-            'merchant_loan_id' => $order_id
+            'merchant_loan_id' => $order_id,
+            'success_url' => $url_ok,
+            'postback_url' => $callback_url,
+            'failure_url' => $url_ko,
+            'phone' => !empty($order['details']['BT']->phone_1)? $order['details']['BT']->phone_1 : $order['details']['BT']->phone_2,
+            'software_name' => 'vituemart',
+            'software_version' => 'joomla 3 - virtuemart 3'
         );
         $this->log($gf_data. ": ". var_export($gf_data,1));
 
