@@ -155,7 +155,10 @@ class plgVmPaymentGetfinancing extends vmPSPlugin {
         $szip = !isset($order['details']['ST']->zip) ? $order['details']['BT']->zip : $order['details']['ST']->zip;
 
         //phone
-        $phone = $order['details']['BT']->phone_1;
+        $phone = !empty($order['details']['BT']->phone_1) ? $order['details']['BT']->phone_1 : $order['details']['BT']->phone_2;
+        if ($phone == null){
+          $phone ='';
+        }
         $mobile_phone =$order['details']['BT']->phone_2;
 
         $this->log("Creating Form");
@@ -181,6 +184,14 @@ class plgVmPaymentGetfinancing extends vmPSPlugin {
 
         $merchant_loan_id = md5(time() .$merchant_id . $order['details']['BT']->first_name . $order_amount);
 
+        $sql = "INSERT INTO `#__getfinancing` ( order_id, merchant_loan_id ) values ('".$order_id."', '".$merchant_loan_id."')";
+        $db = JFactory::getDBO();
+        $db->setQuery($sql);
+        $db->query();
+
+
+
+
         $gf_data = array(
             'amount'           => $order_amount,
             'product_info'     => $product_info,
@@ -201,11 +212,11 @@ class plgVmPaymentGetfinancing extends vmPSPlugin {
             ),
             'version'          => '1.9',
             'email'            => $customer_email,
-            'merchant_loan_id' => $order_id,
+            'merchant_loan_id' => $merchant_loan_id,
             'success_url' => $url_ok,
             'postback_url' => $callback_url,
             'failure_url' => $url_ko,
-            'phone' => !empty($order['details']['BT']->phone_1)? $order['details']['BT']->phone_1 : $order['details']['BT']->phone_2,
+            'phone' => $phone,
             'software_name' => 'vituemart',
             'software_version' => 'joomla 3 - virtuemart 3'
         );
@@ -332,8 +343,19 @@ class plgVmPaymentGetfinancing extends vmPSPlugin {
             $this->log("Starting callback script");
 
 
+            $sql = "SELECT * from `#__getfinancing` where merchant_loan_id ='".$merchant_transaction_id."'";
+            $db = JFactory::getDBO();
+            $db->setQuery($sql);
+            $results = $db->loadObjectList();
+            $order_id = $results[0]->order_id;
+
+            if (   $order_id  == null ){
+              die("Hack detected. Order not approved");
+            }
+
+
               $orderModel = VmModel::getModel('orders');
-              $order_number = $orderModel->getOrderIdByOrderNumber($merchant_transaction_id);
+              $order_number = $orderModel->getOrderIdByOrderNumber($order_id);
               $order = $orderModel->getOrder($order_number);
               $order['order_status'] =  "C";
               $order['customer_notified'] = 1;
