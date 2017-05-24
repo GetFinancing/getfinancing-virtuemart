@@ -131,7 +131,6 @@ class plgVmPaymentGetfinancing extends vmPSPlugin {
         //Order email & Full name
         $customer_email = $order['details']['BT']->email;
         $customer_name = $order['details']['BT']->first_name.' '.$order['details']['BT']->last_name;
-
         //Order Amount
         //Precio del pedido
         $order_amount = number_format((float)($order['details']['BT']->order_total)/100, 2, '.', '' );
@@ -194,8 +193,8 @@ class plgVmPaymentGetfinancing extends vmPSPlugin {
 
         $gf_data = array(
             'amount'           => $order_amount,
-            'product_info'     => $product_info,
-            //'cart_items'       => json_encode($cart_items),
+            //'product_info'     => $product_info,
+            'cart_items'       => $cart_items,
             'first_name'       => $order['details']['BT']->first_name,
             'last_name'        => $order['details']['BT']->last_name,
             'shipping_address' => array(
